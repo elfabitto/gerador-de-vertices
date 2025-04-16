@@ -183,23 +183,43 @@ def processar_shapefile(caminho_shapefile, caminho_saida_excel=None, caminho_sai
             'fuso': fuso
         })
     
+    # Calcular o centro geométrico real dos pontos
+    centro_lon = sum(p['longitude'] for p in pontos_info) / len(pontos_info)
+    centro_lat = sum(p['latitude'] for p in pontos_info) / len(pontos_info)
+    centro = (centro_lon, centro_lat)
+    
     # Encontrar o ponto mais ao norte
     ponto_mais_norte = max(pontos_info, key=lambda p: p['norte_utm'])
-    
-    # Calcular o centro como o ponto mais ao norte
-    centro = (ponto_mais_norte['longitude'], ponto_mais_norte['latitude'])
     
     # Calcular o azimute para cada ponto em relação ao centro
     for ponto in pontos_info:
         ponto['azimute'] = calcular_azimute((ponto['longitude'], ponto['latitude']), centro)
     
     # Ordenar os pontos pelo azimute (sentido horário a partir do norte)
-    pontos_ordenados = sorted(pontos_info, key=lambda p: p['azimute'])
+    pontos_ordenados = []
     
-    # Colocar o ponto mais ao norte como o primeiro
-    indice_ponto_norte = next((i for i, p in enumerate(pontos_ordenados) if p == ponto_mais_norte), None)
-    if indice_ponto_norte is not None and indice_ponto_norte > 0:
-        pontos_ordenados = pontos_ordenados[indice_ponto_norte:] + pontos_ordenados[:indice_ponto_norte]
+    # Adicionar o ponto mais ao norte como o primeiro
+    pontos_ordenados.append(ponto_mais_norte)
+    pontos_restantes = [p for p in pontos_info if p != ponto_mais_norte]
+    
+    # Ordenar os pontos restantes no sentido horário, sempre pegando o próximo mais próximo
+    ponto_atual = ponto_mais_norte
+    while pontos_restantes:
+        # Filtrar pontos com azimute maior que o ponto atual (sentido horário)
+        proximos_pontos = [p for p in pontos_restantes if p['azimute'] > ponto_atual['azimute']]
+        
+        # Se não houver pontos com azimute maior, pegar os pontos restantes (completou uma volta)
+        if not proximos_pontos:
+            proximos_pontos = pontos_restantes
+        
+        # Encontrar o ponto mais próximo no sentido horário
+        proximo_ponto = min(proximos_pontos, key=lambda p: abs(p['azimute'] - ponto_atual['azimute']) 
+                            if p['azimute'] > ponto_atual['azimute'] 
+                            else abs(p['azimute'] + 360 - ponto_atual['azimute']))
+        
+        pontos_ordenados.append(proximo_ponto)
+        pontos_restantes.remove(proximo_ponto)
+        ponto_atual = proximo_ponto
     
     # Criar um DataFrame para armazenar as coordenadas
     dados = []
