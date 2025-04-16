@@ -1,0 +1,60 @@
+# Arquivos gerados pelo Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ambientes virtuais
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# Arquivos de IDE e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Arquivos de log
+*.log
+
+# Arquivos gerados pelo projeto
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.qpj
+*.xlsx
+*.xls
+
+# Exceção para o arquivo de exemplo
+!pontos_exemplo.shp
+!pontos_exemplo.shx
+!pontos_exemplo.dbf
+!pontos_exemplo.prj
+!pontos_exemplo.cpg
+!pontos_exemplo.qpj
+!TABELA DE COORDENADAS DO PROJETO.xlsx
