@@ -5,6 +5,11 @@ pyproj>=3.1.0
 openpyxl>=3.0.9
 numpy>=1.20.0
 shapely>=1.8.0
+PyQt5>=5.15.0
+
+# Dependências para empacotamento
+pyinstaller>=5.0.0
+pillow>=8.0.0  # Para criação de ícones
 
 # Dependências opcionais para desenvolvimento
 pytest>=6.2.5
