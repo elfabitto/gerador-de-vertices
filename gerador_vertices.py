@@ -17,6 +17,9 @@ from pyproj import CRS, Transformer
 import numpy as np
 from shapely.geometry import Point
 import math
+import openpyxl
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 def decimal_para_gms(coordenada, is_latitude=True):
     """
@@ -40,10 +43,11 @@ def decimal_para_gms(coordenada, is_latitude=True):
     segundos = (minutos_decimal - minutos) * 60
     
     # Formatar a string com sinal negativo para sul e oeste
+    # Formato como na planilha de referência: -03 19' 4031121''
     if sinal < 0:
-        return f"-{graus:02d}° {minutos:02d}' {segundos:.5f}\""
+        return f"-{graus:02d} {minutos:02d}' {segundos:.5f}''"
     else:
-        return f"{graus:02d}° {minutos:02d}' {segundos:.5f}\""
+        return f"{graus:02d} {minutos:02d}' {segundos:.5f}''"
 
 def calcular_azimute(ponto, centro):
     """
@@ -100,6 +104,72 @@ def converter_para_geografico(x, y, crs_shapefile):
     
     return latitude, longitude
 
+def formatar_planilha(caminho_excel):
+    """
+    Formata a planilha Excel para ficar semelhante à planilha de referência.
+    
+    Args:
+        caminho_excel (str): Caminho para o arquivo Excel
+    """
+    # Carregar o arquivo Excel
+    wb = openpyxl.load_workbook(caminho_excel)
+    ws = wb.active
+    
+    # Definir cores
+    cor_cabecalho = PatternFill(start_color="A6A6A6", end_color="A6A6A6", fill_type="solid")
+    
+    # Definir fonte e alinhamento
+    fonte_cabecalho = Font(bold=True, size=11)
+    fonte_dados = Font(bold=True, size=11)
+    alinhamento_centro = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    
+    # Definir bordas
+    borda_fina = Side(style="thin", color="000000")
+    borda_completa = Border(left=borda_fina, right=borda_fina, top=borda_fina, bottom=borda_fina)
+    
+    # Mesclar células para o título
+    ws.insert_rows(1)
+    ws.merge_cells('A1:E1')
+    ws['A1'] = "TABELA DE COORDENADAS"
+    ws['A1'].font = fonte_cabecalho
+    ws['A1'].alignment = alinhamento_centro
+    ws['A1'].fill = cor_cabecalho
+    
+    # Ajustar cabeçalhos
+    ws['A2'] = "PONTOS"
+    ws['B2'] = "LATITUDE"
+    ws['C2'] = "LONGITUDE"
+    ws['D2'] = "ESTE"
+    ws['E2'] = "NORTE"
+    
+    # Aplicar formatação aos cabeçalhos
+    for col in range(1, 6):
+        cell = ws.cell(row=2, column=col)
+        cell.font = fonte_cabecalho
+        cell.alignment = alinhamento_centro
+        cell.fill = cor_cabecalho
+        cell.border = borda_completa
+    
+    # Aplicar formatação às células de dados
+    num_linhas = ws.max_row
+    for row in range(3, num_linhas + 1):
+        for col in range(1, 6):
+            cell = ws.cell(row=row, column=col)
+            cell.font = fonte_dados
+            cell.alignment = alinhamento_centro
+            cell.border = borda_completa
+    
+    # Ajustar largura das colunas
+    ws.column_dimensions['A'].width = 15
+    ws.column_dimensions['B'].width = 25
+    ws.column_dimensions['C'].width = 25
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 15
+    
+    # Salvar o arquivo formatado
+    wb.save(caminho_excel)
+    print(f"Planilha formatada salva em: {caminho_excel}")
+
 def processar_shapefile(caminho_shapefile, caminho_saida_excel=None, caminho_saida_shapefile=None):
     """
     Processa um arquivo shapefile, gera uma tabela Excel com coordenadas e um novo shapefile.
@@ -117,11 +187,11 @@ def processar_shapefile(caminho_shapefile, caminho_saida_excel=None, caminho_sai
     
     # Definir caminhos de saída padrão se não forem fornecidos
     if caminho_saida_excel is None:
-        caminho_saida_excel = "VERTICES_GERADOS.xlsx"
+        caminho_saida_excel = "TABELA DE COORDENADAS GERADA.xlsx"
     else:
         # Verificar se o caminho fornecido é um diretório
         if os.path.isdir(caminho_saida_excel):
-            caminho_saida_excel = os.path.join(caminho_saida_excel, "VERTICES_GERADOS.xlsx")
+            caminho_saida_excel = os.path.join(caminho_saida_excel, "TABELA DE COORDENADAS GERADA.xlsx")
         # Verificar se o caminho tem uma extensão
         elif not os.path.splitext(caminho_saida_excel)[1]:
             caminho_saida_excel = f"{caminho_saida_excel}.xlsx"
@@ -233,16 +303,13 @@ def processar_shapefile(caminho_shapefile, caminho_saida_excel=None, caminho_sai
         latitude_gms = decimal_para_gms(ponto['latitude'], True)
         longitude_gms = decimal_para_gms(ponto['longitude'], False)
         
-        # Adicionar dados à lista
+        # Adicionar dados à lista - apenas as colunas necessárias para a planilha de referência
         dados.append({
-            'PONTO': nome_ponto,
-            'LATITUDE': round(ponto['latitude'], 5),
-            'LONGITUDE': round(ponto['longitude'], 5),
-            'LATITUDE_GMS': latitude_gms,
-            'LONGITUDE_GMS': longitude_gms,
-            'NORTE UTM': round(ponto['norte_utm'], 3),
-            'LESTE UTM': round(ponto['leste_utm'], 3),
-            'FUSO': ponto['fuso']
+            'PONTOS': nome_ponto,
+            'LATITUDE': latitude_gms,
+            'LONGITUDE': longitude_gms,
+            'ESTE': round(ponto['leste_utm'], 3),
+            'NORTE': round(ponto['norte_utm'], 3)
         })
     
     # Criar DataFrame com os dados
@@ -252,9 +319,23 @@ def processar_shapefile(caminho_shapefile, caminho_saida_excel=None, caminho_sai
     df.to_excel(caminho_saida_excel, index=False)
     print(f"Arquivo Excel salvo em: {caminho_saida_excel}")
     
-    # Criar um novo GeoDataFrame com os pontos ordenados
+    # Aplicar formatação à planilha
+    formatar_planilha(caminho_saida_excel)
+    
+    # Criar um novo GeoDataFrame com os pontos ordenados e apenas as colunas necessárias
     geometrias = [ponto['geometria'] for ponto in pontos_ordenados]
-    novo_gdf = gpd.GeoDataFrame(dados, geometry=geometrias, crs=crs_shapefile)
+    novo_gdf = gpd.GeoDataFrame(
+        {
+            'PONTOS': [d['PONTOS'] for d in dados],
+            'LATITUDE': [d['LATITUDE'] for d in dados],
+            'LONGITUDE': [d['LONGITUDE'] for d in dados],
+            'ESTE': [d['ESTE'] for d in dados],
+            'NORTE': [d['NORTE'] for d in dados],
+            'geometry': geometrias
+        }, 
+        geometry='geometry',
+        crs=crs_shapefile
+    )
     
     # Salvar o novo shapefile
     novo_gdf.to_file(caminho_saida_shapefile)
