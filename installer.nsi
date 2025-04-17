@@ -6,10 +6,10 @@
 
 ; Informações gerais
 Name "GeradorVertices"
-OutFile "installer\GeradorVertices_Setup_1.0.0.exe"
-InstallDir "$PROGRAMFILES\GeradorVertices"
+OutFile "installer\GeradorVertices_Setup_2.0.0.exe"
+InstallDir "$LOCALAPPDATA\GeradorVertices"
 InstallDirRegKey HKCU "Software\GeradorVertices" ""
-RequestExecutionLevel admin
+RequestExecutionLevel user
 
 ; Interface
 !define MUI_ABORTWARNING
@@ -39,11 +39,11 @@ Section "Instalar" SecInstall
   ; Registrar desinstalador
   WriteRegStr HKCU "Software\GeradorVertices" "" $INSTDIR
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayName" "GeradorVertices"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "UninstallString" "$INSTDIR\Uninstall.exe"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayIcon" "$INSTDIR\GeradorVertices.exe"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayVersion" "1.0.0"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "Publisher" "Gerador de Vértices"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayName" "GeradorVertices"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "UninstallString" "$INSTDIR\Uninstall.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayIcon" "$INSTDIR\GeradorVertices.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "DisplayVersion" "2.0.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices" "Publisher" "Gerador de Vértices"
 SectionEnd
 
 ; Seção de desinstalação
@@ -57,6 +57,6 @@ Section "Uninstall"
   Delete "$DESKTOP\GeradorVertices.lnk"
   
   ; Remover registros
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GeradorVertices"
   DeleteRegKey HKCU "Software\GeradorVertices"
 SectionEnd
