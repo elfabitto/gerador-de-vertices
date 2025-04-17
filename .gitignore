@@ -49,6 +49,8 @@ venv.bak/
 *.qpj
 *.xlsx
 *.xls
+*.exe
+installer/
 
 # Exceção para o arquivo de exemplo
 !pontos_exemplo.shp
